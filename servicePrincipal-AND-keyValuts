@@ -1,0 +1,43 @@
+service prinicpal: (Mostly used at production more of like client ID and client secret)
+---------------------------------------------------------------------------------------
+	step 1: creating CLIENT ID
+		-> create an app in microsoft entra ID (service prinicipal) (this is actually creating an client ID)
+	step 2: creating CLIENT SECRET
+		-> creating certificates under microsoft entra ID
+	step 3: Giving permissions for this app (client ID AND client secret) to access the folder
+            inside the container and container inside storage account.
+            Permission is Blob storage contributor
+	step 4: Add this code
+		spark.conf.set("fs.azure.account.auth.type.<STORAGE_ACCOUNT>.dfs.core.windo
+		ws.net","OAuth")
+		spark.conf.set("fs.azure.account.oauth.provider.type.<STORAGE_ACCOUNT>.dfs.
+		core.windows.net","or
+		g.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
+		spark.conf.set("fs.azure.account.oauth2.client.id.<STORAGE_ACCOUNT>.dfs.core.
+		windows.net","<CLIENT_ID>")
+		spark.conf.set("fs.azure.account.oauth2.client.secret.<STORAGE_ACCOUNT>.dfs.
+		core.windows.net","<CLIENT_SECRTE>")
+		spark.conf.set("fs.azure.account.oauth2.client.endpoint.<STORAGE_ACCOUNT>.d
+		fs.core.windows.net",
+		"https://login.microsoftonline.com/<DIRECTORY_ID>/oa
+		uth2/token")
+	step 5: check whether you're able to fetch the file from storage account's folder using service principal
+        	spark.read.csv("abfs://<container_name>@<storage_name>.dfs.core.windows.net/customers.csv",header=True)
+
+
+Adding the client secret, client ID and directory ID at key vaults:
+----------------------------------------------------------------------
+step 0: Add permissions for you to create key vaults and azure databricks should be able to access those key vaults (Permissions: key vault administrator and key vault user)
+step 1: create key vault account and make a note of key-vault name
+step 2: add the secret value at secret session
+step 3: adding the databricks secret scope
+		Go to <databricks_url>#secrets/createScope
+		Inside databricks secret scope
+			1. provide scope name (make a note of scope name)
+			2. Give DNS name and RESOURCE ID by checking on to key-valut properties
+			3. and create the scope
+step 4: Finally use dbutils.secrets.get('<databricks_scope>', '<key-vault-name>') to retrieve values of three keys
+
+
+NOTE: The above action is applicable for only ADLS GEN2 storage because provide access upto folder level and container level
+whereas blob only supports file creation
